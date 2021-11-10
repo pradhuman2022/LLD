@@ -4,10 +4,15 @@ import java.util.*;
 class FileSystem {
     
     Map<String, FileSystemAttributes> directoryDetailsMap; 
+    PriorityQueue<Directory> directoryHeap;
+    HashSet<Directory> isDirectoryPresentInHeap;
+    
     int allFileSize;
     
     public FileSystem() {
         directoryDetailsMap = new HashMap<>();
+        directoryHeap = new PriorityQueue<Directory>((a, b) -> b.size - a.size);
+        isDirectoryPresentInHeap = new HashSet<>();
         this.allFileSize = 0;
     }
     
@@ -17,23 +22,20 @@ class FileSystem {
     
     public List<Directory> getNCollection(int n) {
         
-        List<Directory> collections = new ArrayList<>();
-    
-        for (Map.Entry<String, FileSystemAttributes> entry: directoryDetailsMap.entrySet()) {
-            if (entry.getValue() instanceof Directory) {
-                collections.add((Directory)entry.getValue());
-            }
-         }
-        
-        if (collections.size() < n)
+        if (directoryHeap.size() < n)
             return new ArrayList<>();
            
-        Collections.sort(collections, (a, b) -> b.size - a.size);
-        
         List<Directory> output = new ArrayList<>();
-    
-        for (int i = 0; i < n && i < collections.size(); i++)
-            output.add(collections.get(i));
+        PriorityQueue<Directory> tempDirectoryHeap = new PriorityQueue<Directory>((a, b) -> b.size - a.size) ; 
+        
+        for (int i = 0; i < n; i++) {
+            Directory d = directoryHeap.poll();
+            output.add(d);
+            tempDirectoryHeap.add(d);
+        }
+        
+        for (int i = 0; i < n; i++) 
+            directoryHeap.add(tempDirectoryHeap.poll());
         
         return output;
     }
@@ -49,6 +51,10 @@ class FileSystem {
             
             d.size += size;
             d.files.add(file);
+            
+            if (!isDirectoryPresentInHeap.contains(d)) {
+                directoryHeap.add(d);
+            }
             
             directoryDetailsMap.put(dName, d);
         }
@@ -100,7 +106,7 @@ public class Main {
         fileSystem.addFileToDirectory("file2.txt", 100, "collection1");
         fileSystem.addFileToDirectory("file3.txt", 200, "collection1");
         fileSystem.addFileToDirectory("file4.txt", 300, "collection3");
-        fileSystem.addFileToDirectory("file5.txt", 10, "collection4");
+        fileSystem.addFileToDirectory("file5.txt", 400, "collection4");
         
         System.out.println(fileSystem.getSizeOfAllFiles());
         List<Directory> topNCollections = fileSystem.getNCollection(2);
@@ -109,4 +115,3 @@ public class Main {
             System.out.println(collection.name+" " + collection.size+" ");
     }    
 }
-
